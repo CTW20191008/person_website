@@ -61,7 +61,6 @@ function piece(
 
 const identity = `---
 name: 样例
-now: 正在读一本书
 ---
 关于正文里的句子
 `;
@@ -89,17 +88,15 @@ describe("render site", () => {
     const home = bodyOf(result, "/");
 
     review({
-      content: "首页显示名字、近况和已发布记录，不显示草稿",
+      content: "首页显示名字和已发布记录，不显示草稿",
       expected: {
         showsName: true,
-        showsNow: true,
         showsPublished: true,
         hidesDraft: true,
         newerBeforeOlder: true,
       },
       output: {
         showsName: home.includes("样例"),
-        showsNow: home.includes("正在读一本书"),
         showsPublished: home.includes("如何阅读"),
         hidesDraft: !home.includes("不要公开"),
         newerBeforeOlder: home.indexOf("如何阅读") < home.indexOf("较早的笔记"),
@@ -134,7 +131,7 @@ describe("render site", () => {
     });
   });
 
-  it("renders about, now, a topic, and a piece", () => {
+  it("renders about, a topic, and a piece", () => {
     const result = site({
       "config/identity.md": identity,
       "config/topics.yml": topics,
@@ -144,10 +141,9 @@ describe("render site", () => {
     });
 
     review({
-      content: "关于、近况、栏目和单篇都能读到对应内容",
+      content: "关于、栏目和单篇都能读到对应内容",
       expected: {
         about: true,
-        now: true,
         topic: true,
         unusedTopic: 404,
         pieceHtml: true,
@@ -155,7 +151,6 @@ describe("render site", () => {
       },
       output: {
         about: bodyOf(result, "/about").includes("关于正文里的句子"),
-        now: bodyOf(result, "/now").includes("正在读一本书"),
         topic: bodyOf(result, "/topics/learning").includes("如何阅读"),
         unusedTopic: resolveRoute(result, "/topics/writing").status,
         pieceHtml: bodyOf(result, "/how-to-read").includes("<strong>重点</strong>"),
@@ -214,17 +209,4 @@ describe("render site", () => {
     });
   });
 
-  it("still serves now when the note is empty", () => {
-    const result = site({
-      "config/identity.md": "---\nname: 样例\n---\n关于\n",
-      "config/topics.yml": "topics: []\n",
-    });
-    const now = resolveRoute(result, "/now");
-
-    review({
-      content: "近况为空时页面仍然存在",
-      expected: 200,
-      output: now.status,
-    });
-  });
 });

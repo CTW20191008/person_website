@@ -166,17 +166,17 @@ describe("site server", () => {
     const saved = await fetch(`${origin}/settings`, {
       method: "POST",
       headers: { cookie, "Content-Type": "application/x-www-form-urlencoded" },
-      body: "form=identity&name=阿禾&now=在写&body=关于阿禾",
+      body: "form=identity&name=阿禾&body=关于阿禾",
     });
     const topic = await fetch(`${origin}/settings`, {
       method: "POST",
       headers: { cookie, "Content-Type": "application/x-www-form-urlencoded" },
-      body: "form=topic&id=notes&title=记录",
+      body: "form=topic&title=记录",
     });
     const blocked = await fetch(`${origin}/settings`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: "form=identity&name=别人&now=&body=",
+      body: "form=identity&name=别人&body=",
       redirect: "manual",
     });
 
@@ -184,7 +184,7 @@ describe("site server", () => {
       content: "第一次在页面创建作者，登录后保存资料和栏目",
       expected: {
         create: true,
-        to: "/settings",
+        to: "/",
         name: true,
         topic: true,
         blocked: 303,

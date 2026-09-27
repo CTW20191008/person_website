@@ -8,7 +8,7 @@
   "scripts": {
     "test": "vitest run",
     "test:report": "vitest run; code=$?; open reports/test-report.html; exit $code",
-    "serve": "vite-node src/guide/serve.ts"
+    "serve": "node --watch-path=src ./node_modules/vite-node/vite-node.mjs src/guide/serve.ts"
   },
   "dependencies": {
     "gray-matter": "^4.0.3",

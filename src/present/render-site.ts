@@ -66,7 +66,6 @@ function page(result: PublishSuccess, title: string, main: string, signedIn = fa
     <nav>
       <a href="/archive">时间线</a>
       <a href="/about">关于</a>
-      <a href="/now">近况</a>
       ${signedIn ? `<a href="/upload">上传</a><a href="/settings">设置</a><a href="/logout">退出</a>` : `<a href="/login">登录</a>`}
     </nav>
   </header>
@@ -93,7 +92,6 @@ function pieceList(pieces: PublishedPiece[]): string {
 
 function renderHome(result: PublishSuccess, homeLimit: number, signedIn = false): string {
   const shown = result.pieces.slice(0, homeLimit);
-  const now = renderMarkdown(result.identity.now);
   const more =
     result.pieces.length > shown.length
       ? `<p class="more"><a href="/archive">全部记录</a></p>`
@@ -101,8 +99,7 @@ function renderHome(result: PublishSuccess, homeLimit: number, signedIn = false)
   return page(
     result,
     result.identity.name,
-    `${now ? `<section class="now">${now}</section>` : ""}
-    ${pieceList(shown)}
+    `${pieceList(shown)}
     ${more}`,
     signedIn,
   );
@@ -110,10 +107,6 @@ function renderHome(result: PublishSuccess, homeLimit: number, signedIn = false)
 
 function renderAbout(result: PublishSuccess, signedIn = false): string {
   return page(result, "关于", renderMarkdown(result.identity.body), signedIn);
-}
-
-function renderNow(result: PublishSuccess, signedIn = false): string {
-  return page(result, "近况", `<h1>近况</h1>${renderMarkdown(result.identity.now)}`, signedIn);
 }
 
 function renderArchive(result: PublishSuccess, signedIn = false): string {
@@ -155,10 +148,6 @@ function renderNotFound(result: PublishSuccess, signedIn = false): string {
   );
 }
 
-function xmlEscape(value: string): string {
-  return escapeHtml(value);
-}
-
 function renderFeed(result: PublishSuccess, siteUrl: string): string {
   const origin = siteUrl.replace(/\/$/, "");
   const items = result.feed
@@ -166,11 +155,11 @@ function renderFeed(result: PublishSuccess, siteUrl: string): string {
       const link = `${origin}${entry.path}`;
       const pubDate = new Date(`${entry.publishedAt}T00:00:00Z`).toUTCString();
       return `<item>
-      <title>${xmlEscape(entry.title)}</title>
-      <link>${xmlEscape(link)}</link>
-      <guid>${xmlEscape(link)}</guid>
-      <pubDate>${xmlEscape(pubDate)}</pubDate>
-      <description>${xmlEscape(entry.summary)}</description>
+      <title>${escapeHtml(entry.title)}</title>
+      <link>${escapeHtml(link)}</link>
+      <guid>${escapeHtml(link)}</guid>
+      <pubDate>${escapeHtml(pubDate)}</pubDate>
+      <description>${escapeHtml(entry.summary)}</description>
       <content:encoded><![CDATA[${entry.html.replaceAll("]]>", "]]]]><![CDATA[>")}]]></content:encoded>
     </item>`;
     })
@@ -178,9 +167,9 @@ function renderFeed(result: PublishSuccess, siteUrl: string): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>${xmlEscape(result.identity.name)}</title>
-    <link>${xmlEscape(`${origin}/`)}</link>
-    <description>${xmlEscape(result.identity.now || result.identity.name)}</description>
+    <title>${escapeHtml(result.identity.name)}</title>
+    <link>${escapeHtml(`${origin}/`)}</link>
+    <description>${escapeHtml(result.identity.name)}</description>
     ${items}
   </channel>
 </rss>
@@ -190,7 +179,7 @@ function renderFeed(result: PublishSuccess, siteUrl: string): string {
 function renderSitemap(result: PublishSuccess, siteUrl: string): string {
   const origin = siteUrl.replace(/\/$/, "");
   const urls = result.sitemap
-    .map((item) => `<url><loc>${xmlEscape(`${origin}${item === "/" ? "/" : item}`)}</loc></url>`)
+    .map((item) => `<url><loc>${escapeHtml(`${origin}${item === "/" ? "/" : item}`)}</loc></url>`)
     .join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -222,7 +211,6 @@ export function resolveRoute(
 
   if (path === "/") return { status: 200, contentType: html, body: renderHome(result, homeLimit, signedIn) };
   if (path === "/about") return { status: 200, contentType: html, body: renderAbout(result, signedIn) };
-  if (path === "/now") return { status: 200, contentType: html, body: renderNow(result, signedIn) };
   if (path === "/archive") return { status: 200, contentType: html, body: renderArchive(result, signedIn) };
   if (path === "/feed.xml") return { status: 200, contentType: xml, body: renderFeed(result, siteUrl) };
   if (path === "/sitemap.xml") {

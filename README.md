@@ -22,9 +22,11 @@ npm run serve
 
 打开 http://localhost:4321 。
 
-第一次打开时，页面上创建唯一的作者账号。创建之后不能再注册第二个。访客不用登录就能阅读。
+改了 `src/` 里的代码之后，服务会自己重新打开，不用停掉再执行一次。页面上保存的资料和文章本来就会立刻读到，也不用重启。
 
-登录后打开「设置」：填写名字、近况和关于页，并添加栏目。栏目编号用小写英文、数字和连字符，文章里的栏目就填这个编号。
+第一次打开时，页面上只创建作者账号，填写账号和密码。创建之后进入首页，不能再注册第二个。访客不用登录就能阅读。
+
+打开「设置」时再填写名字和关于页，并选择栏目。可选的栏目是学习、技术、思考、记录。需要别的名称时，再自己添加。
 
 这些内容由页面写入服务器，不用自己改文件。它们不进入公开仓库。
 
@@ -38,13 +40,13 @@ summary: 先看问题。
 kind: essay
 status: published
 publishedAt: 2026-09-02
-category: notes
+category: 学习
 ---
 
 正文写在这里。
 ```
 
-`slug` 是地址，用小写英文、数字和连字符，发布后不要改。`category` 填栏目词表里的 `id`。`kind` 可以是 `essay`（文章）、`note`（笔记）或 `photo`（照片）。`status` 为 `published` 时读者能看到；写成 `draft` 则只保存，页面上不出现。日期写成 `YYYY-MM-DD`。
+`slug` 是地址，用小写英文、数字和连字符，发布后不要改。`category` 填栏目名称，例如 `学习`。`kind` 可以是 `essay`（文章）、`note`（笔记）或 `photo`（照片）。`status` 为 `published` 时读者能看到；写成 `draft` 则只保存，页面上不出现。日期写成 `YYYY-MM-DD`。
 
 照片可以没有正文，但要在文件头写上图片：
 
@@ -57,19 +59,48 @@ media:
 
 ## 目录
 
-代码按依赖方向分成几块。引导是唯一入口。写入负责把页面上的修改存成文件。展示只读发布结果，发布只读内容存储的结果。
+服务入口收到请求后，交给一件事。这几件事彼此分开：
+
+- **引导**只创建作者账号，填写账号和密码。账号只用来登录，不进入后面的阅读。
+- **设置**在打开设置时填写名字、关于页，并选择或添加栏目。
+- **上传**在打开上传时提交文章和图片。
+- **阅读**不经过上面三件事。内容存储读身份、栏目、记录和图片，发布筛出可公开的记录，展示写成页面。
+
+```mermaid
+flowchart TB
+  entry[服务入口]
+  account[引导：账号和密码]
+  settings[设置：名字、关于、栏目]
+  upload[上传：文章和图片]
+  author[账号]
+  config[身份和栏目]
+  pieces[记录和图片]
+  content[内容存储]
+  publish[发布]
+  present[展示]
+
+  entry --> account
+  entry --> settings
+  entry --> upload
+  account --> author
+  settings --> config
+  upload --> pieces
+  config --> content
+  pieces --> content
+  content --> publish
+  publish --> present
+```
 
 ```
-src/guide/       引导。决定这次请求是创建账号、写入，还是往下阅读
-src/write/       写入。作者账号、资料、栏目和上传的文章
-src/content/     内容存储。读记录、身份、栏目词表，并核对图片是否存在
-src/publish/     发布。筛出已发布记录，排序，产出跳转、RSS 数据和站点地图数据
+src/guide/       服务入口，以及引导（账号和密码）
+src/write/       设置（名字、关于、栏目）和上传（文章、图片）
+src/content/     内容存储。读身份、栏目、记录，并核对图片是否存在
+src/publish/     发布。筛出已发布记录，排序，产出跳转、RSS 和站点地图
 src/present/     展示。把发布结果写成阅读页、RSS 和站点地图
-fixtures/sample/ 自测读的样例内容
 tests/           与上面各块对应的自测
 ```
 
-一条记录保存为 `content/pieces/{slug}.md`。身份在 `config/identity.md`，栏目词表在 `config/topics.yml`，图片在 `content/media/`。本机正式内容在 `private/site/` 下，由上传页写入，不进入公开仓库。自测使用 `fixtures/sample` 里的同一布局。
+一条记录保存为 `content/pieces/{slug}.md`。身份在 `config/identity.md`，栏目词表在 `config/topics.yml`，图片在 `content/media/`。本机正式内容在 `private/site/` 下，由页面写入，不进入公开仓库。自测在临时目录里放同一布局，不另留一份样例站点。
 
 有致命错误时，发布停住，不会把半成品写成页面。
 

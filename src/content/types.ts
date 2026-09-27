@@ -8,16 +8,9 @@ export type Piece = {
   kind?: Kind;
   status: Status;
   publishedAt?: string;
-  created?: string;
-  updated?: string;
   category?: string;
-  tags: string[];
   media: string[];
   aliases: string[];
-  series?: string;
-  language: string;
-  translationGroup?: string;
-  author?: string;
   body: string;
 };
 
@@ -41,7 +34,6 @@ export type DiagnosticCode =
   | "identity-missing"
   | "identity-invalid"
   | "identity-name-missing"
-  | "identity-link-invalid"
   | "topics-missing"
   | "topics-invalid"
   | "topics-id-invalid"
@@ -63,15 +55,8 @@ export type PieceLoadResult = {
   warnings: Diagnostic[];
 };
 
-export type IdentityLink = {
-  label: string;
-  url: string;
-};
-
 export type Identity = {
   name: string;
-  now: string;
-  links: IdentityLink[];
   body: string;
 };
 
@@ -79,6 +64,12 @@ export type Topic = {
   id: string;
   title: string;
 };
+
+export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+export function findTopic(topics: Topic[], key: string): Topic | undefined {
+  return topics.find((topic) => topic.id === key || topic.title === key);
+}
 
 export type ContentCatalog = {
   identity?: Identity;

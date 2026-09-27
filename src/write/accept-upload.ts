@@ -4,10 +4,8 @@ import path from "node:path";
 import matter from "gray-matter";
 import yaml from "js-yaml";
 import { loadContent } from "../content/load-content.js";
-import type { Diagnostic, DiagnosticCode } from "../content/types.js";
+import { SLUG_PATTERN, type Diagnostic, type DiagnosticCode } from "../content/types.js";
 import { publish } from "../publish/publish.js";
-
-const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export type UploadFile = {
   filename: string;
@@ -48,7 +46,6 @@ const reasons: Record<DiagnosticCode, string> = {
   "identity-missing": "还没有身份文件",
   "identity-invalid": "身份文件无法读取",
   "identity-name-missing": "身份文件缺少名字",
-  "identity-link-invalid": "身份文件里的链接不完整",
   "topics-missing": "还没有栏目词表",
   "topics-invalid": "栏目词表无法读取",
   "topics-id-invalid": "栏目编号无法使用",

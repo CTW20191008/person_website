@@ -8,17 +8,16 @@ import path from "node:path";
 import matter from "gray-matter";
 import yaml from "js-yaml";
 import { loadPieces } from "./load-pieces.js";
-import type {
-  ContentCatalog,
-  Diagnostic,
-  DiagnosticCode,
-  Identity,
-  IdentityLink,
-  Piece,
-  Topic,
+import {
+  findTopic,
+  SLUG_PATTERN,
+  type ContentCatalog,
+  type Diagnostic,
+  type DiagnosticCode,
+  type Identity,
+  type Piece,
+  type Topic,
 } from "./types.js";
-
-const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 function isString(value: unknown): value is string {
   return typeof value === "string";
@@ -70,34 +69,11 @@ function loadIdentity(rootDir: string): {
   const name = isString(data.name) ? data.name.trim() : "";
   if (name === "") errors.push(diagnostic("identity-name-missing"));
 
-  if (data.now !== undefined && !isString(data.now)) {
-    errors.push(diagnostic("identity-invalid"));
-  }
-  const now = isString(data.now) ? data.now.trim() : "";
-
-  const links = readLinks(data.links);
-  if (links === undefined) errors.push(diagnostic("identity-link-invalid"));
-
   if (errors.length > 0) return { errors };
   return {
-    identity: { name, now, links: links ?? [], body },
+    identity: { name, body },
     errors,
   };
-}
-
-function readLinks(value: unknown): IdentityLink[] | undefined {
-  if (value === undefined) return [];
-  if (!Array.isArray(value)) return undefined;
-  const links: IdentityLink[] = [];
-  for (const item of value) {
-    if (!item || typeof item !== "object" || Array.isArray(item)) return undefined;
-    const record = item as Record<string, unknown>;
-    const label = isString(record.label) ? record.label.trim() : "";
-    const url = isString(record.url) ? record.url.trim() : "";
-    if (label === "" || url === "") return undefined;
-    links.push({ label, url });
-  }
-  return links;
 }
 
 function loadTopics(rootDir: string): { topics: Topic[]; errors: Diagnostic[] } {
@@ -153,24 +129,21 @@ function loadTopics(rootDir: string): { topics: Topic[]; errors: Diagnostic[] } 
   return { topics, errors };
 }
 
-function fillAuthor(pieces: Piece[], name: string | undefined): Piece[] {
-  if (name === undefined) return pieces;
-  return pieces.map((piece) =>
-    piece.author === undefined ? { ...piece, author: name } : piece,
-  );
-}
-
 function checkCategories(
   pieces: Piece[],
   topics: Topic[],
   topicsOk: boolean,
 ): { errors: Diagnostic[]; warnings: Diagnostic[] } {
   if (!topicsOk) return { errors: [], warnings: [] };
-  const ids = new Set(topics.map((topic) => topic.id));
   const errors: Diagnostic[] = [];
   const warnings: Diagnostic[] = [];
   for (const piece of pieces) {
-    if (piece.category === undefined || ids.has(piece.category)) continue;
+    if (piece.category === undefined) continue;
+    const matched = findTopic(topics, piece.category);
+    if (matched) {
+      piece.category = matched.id;
+      continue;
+    }
     const item =
       piece.status === "published"
         ? diagnostic("category-unknown", piece.slug)
@@ -250,7 +223,7 @@ export function loadContent(rootDir: string): ContentCatalog {
       ? loadPieces(piecesDir)
       : { pieces: [], errors: [], warnings: [] };
 
-  const pieces = fillAuthor(pieceResult.pieces, identityResult.identity?.name);
+  const pieces = pieceResult.pieces;
   const categories = checkCategories(
     pieces,
     topicsResult.topics,

@@ -2,18 +2,18 @@ import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
 import yaml from "js-yaml";
-import type {
-  Diagnostic,
-  DiagnosticCode,
-  Kind,
-  Piece,
-  PieceLoadResult,
-  Status,
+import {
+  SLUG_PATTERN,
+  type Diagnostic,
+  type DiagnosticCode,
+  type Kind,
+  type Piece,
+  type PieceLoadResult,
+  type Status,
 } from "./types.js";
 
 const RESERVED = new Set([
   "about",
-  "now",
   "archive",
   "topics",
   "photos",
@@ -25,7 +25,6 @@ const RESERVED = new Set([
   "feed.xml",
   "sitemap.xml",
 ]);
-const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const KINDS = new Set<Kind>(["essay", "note", "photo"]);
 
 type ParsedFile = {
@@ -67,10 +66,8 @@ function blankPiece(slug: string): Piece {
   return {
     slug,
     status: "draft",
-    tags: [],
     media: [],
     aliases: [],
-    language: "zh",
     body: "",
   };
 }
@@ -145,15 +142,9 @@ function parseFile(piecesDir: string, filename: string): ParsedFile {
   }
 
   const publishedAt = isString(data.publishedAt) ? data.publishedAt : undefined;
-  const createdInput = isString(data.created) ? data.created : undefined;
-  const updatedInput = isString(data.updated) ? data.updated : undefined;
-  for (const value of [publishedAt, createdInput, updatedInput]) {
-    if (value !== undefined && !isRealDate(value)) {
-      errors.push(diagnostic("fatal", "date-invalid", reportedSlug));
-    }
+  if (publishedAt !== undefined && !isRealDate(publishedAt)) {
+    errors.push(diagnostic("fatal", "date-invalid", reportedSlug));
   }
-  const publishedAtValid =
-    publishedAt !== undefined && isRealDate(publishedAt);
 
   const title = isString(data.title) && data.title.trim() !== "" ? data.title : undefined;
   const summary =
@@ -193,31 +184,15 @@ function parseFile(piecesDir: string, filename: string): ParsedFile {
   const piece: Piece = {
     slug,
     status,
-    tags: stringList(data.tags),
     media,
     aliases: stringList(data.aliases),
-    language:
-      isString(data.language) && data.language.trim() !== "" ? data.language : "zh",
     body,
   };
   if (title) piece.title = title;
   if (summary) piece.summary = summary;
   if (kind) piece.kind = kind;
   if (publishedAt) piece.publishedAt = publishedAt;
-  if (createdInput !== undefined) piece.created = createdInput;
-  else if (!statusInvalid && status === "published" && publishedAtValid) {
-    piece.created = publishedAt;
-  }
-  if (updatedInput !== undefined) piece.updated = updatedInput;
-  else if (!statusInvalid && status === "published" && publishedAtValid) {
-    piece.updated = publishedAt;
-  }
   if (category) piece.category = category;
-  if (isString(data.series) && data.series.trim() !== "") piece.series = data.series;
-  if (isString(data.translationGroup) && data.translationGroup.trim() !== "") {
-    piece.translationGroup = data.translationGroup;
-  }
-  if (isString(data.author) && data.author.trim() !== "") piece.author = data.author;
 
   return {
     piece,

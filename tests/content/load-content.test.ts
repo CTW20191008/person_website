@@ -89,17 +89,11 @@ function warn(code: Diagnostic["code"], slug: string): Diagnostic {
 }
 
 describe("loadContent", () => {
-  it("reads name, now, links, and about text", () => {
+  it("reads the name and about text", () => {
     const result = loadContent(
       site({
         "config/identity.md": `---
 name: 某人
-now: 正在读书
-links:
-  - label: 笔记
-    url: https://example.com/notes
-  - label: 邮箱
-    url: mailto:me@example.com
 ---
   关于正文
 `,
@@ -108,28 +102,17 @@ links:
     );
 
     review({
-      content: "读出身份里的名字、近况、链接和关于正文",
-      expected: {
-        name: "某人",
-        now: "正在读书",
-        links: [
-          { label: "笔记", url: "https://example.com/notes" },
-          { label: "邮箱", url: "mailto:me@example.com" },
-        ],
-        body: "关于正文",
-        errors: [],
-      },
+      content: "读出身份里的名字和关于正文",
+      expected: { name: "某人", body: "关于正文", errors: [] },
       output: {
         name: result.identity?.name ?? null,
-        now: result.identity?.now ?? null,
-        links: result.identity?.links ?? null,
         body: result.identity?.body ?? null,
         errors: result.errors,
       },
     });
   });
 
-  it("uses empty now and links when they are omitted", () => {
+  it("uses empty about text when it is omitted", () => {
     const result = loadContent(
       site({
         "config/identity.md": identityFile({ name: "某人" }, ""),
@@ -138,41 +121,27 @@ links:
     );
 
     review({
-      content: "省略近况、链接和关于正文时使用空值",
-      expected: { now: "", links: [], body: "", errors: [] },
+      content: "省略关于正文时使用空值",
+      expected: { body: "", errors: [] },
       output: {
-        now: result.identity?.now ?? null,
-        links: result.identity?.links ?? null,
         body: result.identity?.body ?? null,
         errors: result.errors,
       },
     });
   });
 
-  it("trims the name and link text", () => {
+  it("trims the name", () => {
     const result = loadContent(
       site({
-        "config/identity.md": `---
-name: "  某人  "
-links:
-  - label: "  笔记  "
-    url: "  https://example.com  "
----
-`,
+        "config/identity.md": "---\nname: \"  某人  \"\n---\n",
         "config/topics.yml": emptyTopics,
       }),
     );
 
     review({
-      content: "名字和链接去掉首尾空白",
-      expected: {
-        name: "某人",
-        links: [{ label: "笔记", url: "https://example.com" }],
-      },
-      output: {
-        name: result.identity?.name ?? null,
-        links: result.identity?.links ?? null,
-      },
+      content: "名字去掉首尾空白",
+      expected: "某人",
+      output: result.identity?.name ?? null,
     });
   });
 
@@ -204,7 +173,7 @@ links:
   it("fails when the name is missing", () => {
     const result = loadContent(
       site({
-        "config/identity.md": "---\nnow: 正在读书\n---\n",
+        "config/identity.md": "---\n---\n",
         "config/topics.yml": emptyTopics,
       }),
     );
@@ -227,56 +196,6 @@ links:
     review({
       content: "身份名字为空白",
       expected: { identity: null, errors: [fatal("identity-name-missing")] },
-      output: { identity: result.identity ?? null, errors: result.errors },
-    });
-  });
-
-  it("fails when links are not a list", () => {
-    const result = loadContent(
-      site({
-        "config/identity.md": identityFile({ name: "某人", links: "hello" }),
-        "config/topics.yml": emptyTopics,
-      }),
-    );
-
-    review({
-      content: "身份链接不是列表",
-      expected: { identity: null, errors: [fatal("identity-link-invalid")] },
-      output: { identity: result.identity ?? null, errors: result.errors },
-    });
-  });
-
-  it("fails when a link is missing a label or url", () => {
-    const result = loadContent(
-      site({
-        "config/identity.md": `---
-name: 某人
-links:
-  - label: 只有名字
----
-`,
-        "config/topics.yml": emptyTopics,
-      }),
-    );
-
-    review({
-      content: "身份链接缺少名称或地址",
-      expected: { identity: null, errors: [fatal("identity-link-invalid")] },
-      output: { identity: result.identity ?? null, errors: result.errors },
-    });
-  });
-
-  it("fails when now is not text", () => {
-    const result = loadContent(
-      site({
-        "config/identity.md": identityFile({ name: "某人", now: "1" }),
-        "config/topics.yml": emptyTopics,
-      }),
-    );
-
-    review({
-      content: "近况不是文字",
-      expected: { identity: null, errors: [fatal("identity-invalid")] },
       output: { identity: result.identity ?? null, errors: result.errors },
     });
   });
@@ -433,67 +352,6 @@ links:
     });
   });
 
-  it("fills a missing author from the identity name", () => {
-    const result = loadContent(
-      site({
-        "config/identity.md": namedIdentity,
-        "config/topics.yml": learningTopics,
-        ...publishedPiece(),
-        ...pieceFile({
-          slug: "draft-note",
-          title: "草稿",
-          summary: "还在写",
-          kind: "note",
-          status: "draft",
-          category: "learning",
-        }),
-      }),
-    );
-
-    review({
-      content: "省略的作者使用身份里的名字",
-      expected: [
-        { slug: "draft-note", author: "某人" },
-        { slug: "how-to-read", author: "某人" },
-      ],
-      output: result.pieces.map((piece) => ({ slug: piece.slug, author: piece.author ?? null })),
-    });
-  });
-
-  it("keeps an author written on the piece", () => {
-    const result = loadContent(
-      site({
-        "config/identity.md": namedIdentity,
-        "config/topics.yml": learningTopics,
-        ...publishedPiece({ author: "别人" }),
-      }),
-    );
-
-    review({
-      content: "记录里写了作者时不覆盖",
-      expected: "别人",
-      output: result.pieces[0]?.author ?? null,
-    });
-  });
-
-  it("does not invent an author when identity cannot be read", () => {
-    const result = loadContent(
-      site({
-        "config/topics.yml": learningTopics,
-        ...publishedPiece(),
-      }),
-    );
-
-    review({
-      content: "身份没读出来时不编造作者",
-      expected: { author: null, errors: [fatal("identity-missing")] },
-      output: {
-        author: result.pieces[0]?.author ?? null,
-        errors: result.errors.filter((item) => item.code === "identity-missing"),
-      },
-    });
-  });
-
   it("rejects a published category outside the word list", () => {
     const result = loadContent(
       site({
@@ -507,6 +365,22 @@ links:
       content: "已发布记录使用了词表外的栏目",
       expected: { errors: [fatal("category-unknown", "how-to-read")], warnings: [] },
       output: { errors: result.errors, warnings: result.warnings },
+    });
+  });
+
+  it("accepts a topic by its name", () => {
+    const result = loadContent(
+      site({
+        "config/identity.md": namedIdentity,
+        "config/topics.yml": learningTopics,
+        ...publishedPiece({ category: "学习" }),
+      }),
+    );
+
+    review({
+      content: "文章里的栏目可以填写名称",
+      expected: { errors: [], category: "learning" },
+      output: { errors: result.errors, category: result.pieces[0]?.category ?? null },
     });
   });
 

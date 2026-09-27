@@ -14,7 +14,7 @@ import {
 } from "../write/author.js";
 import { resolveRoute, routeParts } from "../present/render-site.js";
 import { loadContent } from "../content/load-content.js";
-import { publish } from "../publish/publish.js";
+import { publish, type PublishSuccess } from "../publish/publish.js";
 import { addTopic, readSettings, renderSettings, saveIdentity } from "../write/settings.js";
 import { handleUploadRequest } from "../write/upload-page.js";
 
@@ -62,11 +62,21 @@ function loginPage(message = "", create = false): string {
 `;
 }
 
-function waitingPage(signedIn: boolean): string {
-  const next = signedIn
-    ? `<p>请先填写资料和栏目。</p><p><a href="/settings">去设置</a></p>`
-    : `<p>网站还在准备。</p><p><a href="/login">登录</a></p>`;
-  return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8" /><title>网站还在准备</title><style>${css}</style></head><body><main><h1>网站还在准备</h1>${next}</main></body></html>`;
+function waitingPage(): string {
+  return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8" /><title>网站还在准备</title><style>${css}</style></head><body><main><h1>网站还在准备</h1><p><a href="/login">登录</a></p></main></body></html>`;
+}
+
+function emptySite(name: string): PublishSuccess {
+  return {
+    ok: true,
+    identity: { name, body: "" },
+    pieces: [],
+    topics: [],
+    redirects: [],
+    feed: [],
+    sitemap: ["/", "/about", "/archive", "/feed.xml", "/sitemap.xml"],
+    warnings: [],
+  };
 }
 
 function html(res: http.ServerResponse, status: number, body: string, cookie?: string): void {
@@ -146,7 +156,7 @@ export function createSiteServer(rootDir: string, siteUrl = "http://localhost:43
           html(res, 200, loginPage(created.message, true));
           return;
         }
-        redirect(res, "/settings", authorCookie(signSession(created.account)));
+        redirect(res, "/", authorCookie(signSession(created.account)));
         return;
       }
       if (name !== account.username || !passwordsMatch(password, account.password)) {
@@ -167,10 +177,9 @@ export function createSiteServer(rootDir: string, siteUrl = "http://localhost:43
         const form = fields.get("form");
         const result =
           form === "topic"
-            ? addTopic(rootDir, fields.get("id") ?? "", fields.get("title") ?? "")
+            ? addTopic(rootDir, fields.get("title") ?? "")
             : saveIdentity(rootDir, {
                 name: fields.get("name") ?? "",
-                now: fields.get("now") ?? "",
                 body: fields.get("body") ?? "",
               });
         html(res, 200, renderSettings(readSettings(rootDir), result.ok ? "已保存。" : result.message));
@@ -222,7 +231,15 @@ export function createSiteServer(rootDir: string, siteUrl = "http://localhost:43
         item.code.startsWith("identity-") || item.code.startsWith("topics-"),
       );
       if (preparing) {
-        html(res, 200, waitingPage(signedIn));
+        if (signedIn) {
+          const route = resolveRoute(emptySite(username ?? ""), pathname, { siteUrl, signedIn });
+          const parts = routeParts(route);
+          res.statusCode = parts.status;
+          for (const [key, value] of Object.entries(parts.headers)) res.setHeader(key, value);
+          res.end(parts.body);
+          return;
+        }
+        html(res, 200, waitingPage());
         return;
       }
       const codes = published.errors.map((item) => item.code).join(", ");

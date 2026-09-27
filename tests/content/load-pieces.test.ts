@@ -88,11 +88,7 @@ describe("loadPieces", () => {
   it("reads one published essay", () => {
     const result = loadPieces(
       pieces(
-        publishedFile({
-          created: "2026-08-01",
-          updated: "2026-09-02",
-          tags: ["reading"],
-        }),
+        publishedFile(),
       ),
     );
 
@@ -109,13 +105,9 @@ describe("loadPieces", () => {
             kind: "essay",
             status: "published",
             publishedAt: "2026-09-01",
-            created: "2026-08-01",
-            updated: "2026-09-02",
             category: "learning",
-            tags: ["reading"],
             media: [],
             aliases: [],
-            language: "zh",
             body: "正文",
           },
         ],
@@ -128,80 +120,19 @@ describe("loadPieces", () => {
     });
   });
 
-  it("keeps optional identity fields when they are present", () => {
-    const piece = loadPieces(
-      pieces(
-        publishedFile({
-          author: "Ada",
-          series: "reading-group",
-          translationGroup: "how-to-read-group",
-        }),
-      ),
-    ).pieces[0];
-
-    review({
-      content: "保留作者、系列和译文分组",
-      expected: {
-        author: "Ada",
-        series: "reading-group",
-        translationGroup: "how-to-read-group",
-      },
-      output: {
-        author: piece?.author,
-        series: piece?.series,
-        translationGroup: piece?.translationGroup,
-      },
-    });
-  });
-
-  it("treats a missing status as a draft and does not invent dates", () => {
-    const result = loadPieces(
-      pieces(publishedFile({ status: undefined, language: undefined })),
-    );
+  it("treats a missing status as a draft", () => {
+    const result = loadPieces(pieces(publishedFile({ status: undefined })));
     const piece = result.pieces[0];
 
     review({
-      content: "未写状态时视为草稿，并且不编造日期",
-      expected: {
-        errors: [],
-        status: "draft",
-        language: "zh",
-        tags: [],
-        media: [],
-        aliases: [],
-        created: undefined,
-        updated: undefined,
-      },
+      content: "未写状态时视为草稿",
+      expected: { errors: [], status: "draft", media: [], aliases: [] },
       output: {
         errors: result.errors,
         status: piece?.status,
-        language: piece?.language,
-        tags: piece?.tags,
         media: piece?.media,
         aliases: piece?.aliases,
-        created: piece?.created,
-        updated: piece?.updated,
       },
-    });
-  });
-
-  it("defaults omitted created and updated to publishedAt on published pieces", () => {
-    const piece = loadPieces(pieces(publishedFile())).pieces[0];
-
-    review({
-      content: "已发布记录省略的写作日和修订日等于发布日",
-      expected: { created: "2026-09-01", updated: "2026-09-01" },
-      output: { created: piece?.created, updated: piece?.updated },
-    });
-  });
-
-  it("keeps an earlier created date", () => {
-    const piece = loadPieces(pieces(publishedFile({ created: "2026-08-01" }))).pieces[0];
-
-    review({
-      content: "文件里更早的写作日保持不变",
-      expected: { created: "2026-08-01", updated: "2026-09-01" },
-      output: { created: piece?.created, updated: piece?.updated },
     });
   });
 
@@ -327,7 +258,6 @@ describe("loadPieces", () => {
 
   it.each([
     "about",
-    "now",
     "archive",
     "topics",
     "photos",

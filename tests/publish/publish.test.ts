@@ -297,7 +297,6 @@ describe("publish", () => {
       expected: [
         "/",
         "/about",
-        "/now",
         "/archive",
         "/topics/learning",
         "/how-to-read",
@@ -327,7 +326,6 @@ describe("publish", () => {
       expected: [
         "/",
         "/about",
-        "/now",
         "/archive",
         "/topics/learning",
         "/topics/writing",
@@ -349,7 +347,7 @@ describe("publish", () => {
 
     review({
       content: "没有已发布记录时站点地图仍有固定页面",
-      expected: ["/", "/about", "/now", "/archive", "/feed.xml", "/sitemap.xml"],
+      expected: ["/", "/about", "/archive", "/feed.xml", "/sitemap.xml"],
       output: result.ok ? result.sitemap : [],
     });
   });

@@ -1,5 +1,3 @@
-import { utimesSync } from "node:fs";
-import path from "node:path";
 import { afterAll, afterEach, beforeEach, describe, it } from "vitest";
 import { loadContent } from "../../src/content/load-content.js";
 import { publish } from "../../src/publish/publish.js";
@@ -124,29 +122,6 @@ describe("site contract", () => {
         hasKindPath: sitemap.includes("/notes/field-note"),
         hasCategoryPath: sitemap.includes("/writing/field-note"),
       },
-    });
-  });
-
-  it("uses publishedAt when created and updated are omitted", () => {
-    const made = writeSite(pieceFile("reading"));
-    cleanups.push(made.cleanup);
-    const old = new Date("2020-01-01T00:00:00Z");
-    utimesSync(path.join(made.dir, "content/pieces/reading.md"), old, old);
-    const result = publish(loadContent(made.dir));
-    const piece = result.ok ? result.pieces[0] : undefined;
-    review({
-      content: "省略 created 和 updated 时等于发布日，而不是文件修改时间",
-      expected: { created: "2026-09-02", updated: "2026-09-02" },
-      output: { created: piece?.created ?? null, updated: piece?.updated ?? null },
-    });
-  });
-
-  it("uses the identity name when author is omitted", () => {
-    const { result } = open(pieceFile("reading"));
-    review({
-      content: "省略 author 时使用身份配置里的名字",
-      expected: "样例",
-      output: result.ok ? (result.pieces[0]?.author ?? null) : null,
     });
   });
 

@@ -10,15 +10,8 @@ export type PublishedPiece = {
   category: string;
   html: string;
   kind?: Kind;
-  created?: string;
-  updated?: string;
-  tags: string[];
   media: string[];
   aliases: string[];
-  series?: string;
-  language: string;
-  translationGroup?: string;
-  author?: string;
 };
 
 export type Redirect = {
@@ -72,17 +65,10 @@ function toPublished(piece: ContentCatalog["pieces"][number]): PublishedPiece {
     publishedAt: piece.publishedAt ?? "",
     category: piece.category ?? "",
     html: renderHtml(piece.body),
-    tags: piece.tags,
     media: piece.media,
     aliases: piece.aliases,
-    language: piece.language,
   };
   if (piece.kind) published.kind = piece.kind;
-  if (piece.created) published.created = piece.created;
-  if (piece.updated) published.updated = piece.updated;
-  if (piece.series) published.series = piece.series;
-  if (piece.translationGroup) published.translationGroup = piece.translationGroup;
-  if (piece.author) published.author = piece.author;
   return published;
 }
 
@@ -117,7 +103,6 @@ export function publish(catalog: ContentCatalog): PublishResult {
   const sitemap = [
     "/",
     "/about",
-    "/now",
     "/archive",
     ...topics.map((topic) => topic.path),
     ...pieces.map((piece) => piece.path),
