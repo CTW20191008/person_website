@@ -2,8 +2,18 @@ import { cpSync, createReadStream, existsSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "astro/config";
+import { formatSiteLog, planLocalBuild } from "./src/present/local-build.ts";
 import { loadPublishedSite, siteOrigin, siteRoot } from "./src/present/site.ts";
 
+const plan = planLocalBuild(siteRoot());
+if (!plan.proceed) {
+  const lines = formatSiteLog(plan);
+  for (const line of lines) console.error(line);
+  throw new Error(lines[0] ?? "发布停住");
+}
+if (process.env.SITE_CHECKED !== "1") {
+  for (const line of formatSiteLog(plan)) console.error(line);
+}
 const published = loadPublishedSite();
 const mediaDir = path.join(siteRoot(), "content", "media");
 

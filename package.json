@@ -9,7 +9,9 @@
     "test": "vitest run",
     "test:report": "vitest run; code=$?; open reports/test-report.html; exit $code",
     "dev": "astro dev",
-    "build": "astro build"
+    "build": "astro build",
+    "dev:local": "vite-node src/present/build-local.ts dev",
+    "build:local": "vite-node src/present/build-local.ts build"
   },
   "dependencies": {
     "astro": "^7.3.5",

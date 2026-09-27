@@ -15,6 +15,26 @@ npm run dev
 
 `npm install` 会按 `package.json` 安装依赖，并生成 `node_modules/`。`node_modules` 是第三方包的目录，不进入 Git。依赖的具体版本记在 `package-lock.json` 里。
 
+## 本机构建
+
+正式内容放在 `private/site/`，不进入公开仓库：
+
+```
+private/site/config/identity.md
+private/site/config/topics.yml
+private/site/content/pieces/
+private/site/content/media/
+```
+
+```bash
+npm run dev:local
+npm run build:local
+```
+
+`dev:local` 在 http://localhost:4321 预览这份内容。`build:local` 把站点写到 `dist/`。
+
+有致命错误时命令停住，不会清空已经生成的 `dist/`。草稿缺少标题、摘要、日期或正文时，命令继续，并把警告写进日志。
+
 ## 目录
 
 代码按依赖方向分成三块：展示只读发布结果，发布只读内容存储的结果。
