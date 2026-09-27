@@ -1,0 +1,29 @@
+docs/plans/
+
+config/identity.md
+config/identity.local.md
+config/*.local.*
+content/media/
+private/
+
+# 密钥与本机环境
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# 依赖与构建产物
+node_modules/
+reports/
+dist/
+.output/
+.astro/
+.next/
+.cache/
+
+# 系统与编辑器
+.DS_Store
+.idea/
+.vscode/
+*.swp
