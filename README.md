@@ -1,18 +1,38 @@
-# 测试
+# 个人网站
 
-当前自测覆盖内容存储和发布：读出记录、身份、栏目和图片，并在没有致命错误时产出已发布列表、跳转、RSS 数据和站点地图。
+这个仓库把 Markdown 记录读出来，校验之后生成一个可以阅读的静态站点。页面先能读，版式以后再换。
 
 需要 Node.js 20 或更高版本。
 
-## 准备
+## 本地预览
 
 ```bash
 npm install
+npm run dev
 ```
 
-这会按 `package.json` 安装依赖，并生成 `node_modules/`。`node_modules` 是第三方包的目录，不是网站内容，也不进入 Git。审阅代码时看 `package.json` 和 `package-lock.json` 即可。
+然后打开 http://localhost:4321 。默认读的是 `fixtures/sample`，那是一份样例，不是正式的个人资料。
 
-## 生成报告
+`npm install` 会按 `package.json` 安装依赖，并生成 `node_modules/`。`node_modules` 是第三方包的目录，不进入 Git。依赖的具体版本记在 `package-lock.json` 里。
+
+## 目录
+
+代码按依赖方向分成三块：展示只读发布结果，发布只读内容存储的结果。
+
+```
+src/content/     内容存储。读记录、身份、栏目词表，并核对图片是否存在
+src/publish/     发布。筛出已发布记录，排序，产出跳转、RSS 数据和站点地图数据
+src/present/     展示。把发布结果写成页面、RSS 和站点地图
+src/pages/       站点地址。首页、关于、近况、时间线、栏目、单篇、404
+fixtures/sample/ 用来预览的样例内容
+tests/           与上面三块对应的自测
+```
+
+一条记录是 `content/pieces/{slug}.md`。身份在 `config/identity.md`，栏目词表在 `config/topics.yml`，图片在 `content/media/`。样例里这几项目录放在 `fixtures/sample` 下。正式的身份文件和图片不进入公开仓库。
+
+有致命错误时，发布停住，不会把半成品写成页面。
+
+## 自测
 
 ```bash
 npm test
@@ -28,9 +48,7 @@ npm run test:report
 
 这条命令先跑测试，再用系统浏览器打开上面的 HTML。若测试失败，浏览器仍会打开，命令的退出码与测试结果一致。也可以在 `npm test` 之后直接打开 `reports/test-report.html`。
 
-## 报告内容
-
-每一行是一条用例，列如下：
+每一行是一条用例：
 
 | 列 | 含义 |
 | --- | --- |

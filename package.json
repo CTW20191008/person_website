@@ -7,9 +7,12 @@
   },
   "scripts": {
     "test": "vitest run",
-    "test:report": "vitest run; code=$?; open reports/test-report.html; exit $code"
+    "test:report": "vitest run; code=$?; open reports/test-report.html; exit $code",
+    "dev": "astro dev",
+    "build": "astro build"
   },
   "dependencies": {
+    "astro": "^7.3.5",
     "gray-matter": "^4.0.3",
     "js-yaml": "^4.1.1",
     "marked": "^18.0.14"

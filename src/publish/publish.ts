@@ -34,10 +34,17 @@ export type FeedEntry = {
   html: string;
 };
 
+export type PublishedTopic = {
+  id: string;
+  title: string;
+  path: string;
+};
+
 export type PublishSuccess = {
   ok: true;
   identity: Identity;
   pieces: PublishedPiece[];
+  topics: PublishedTopic[];
   redirects: Redirect[];
   feed: FeedEntry[];
   sitemap: string[];
@@ -103,15 +110,16 @@ export function publish(catalog: ContentCatalog): PublishResult {
     summary: piece.summary,
     html: piece.html,
   }));
-  const topicIds = [...new Set(pieces.map((piece) => piece.category))].sort((left, right) =>
-    left.localeCompare(right),
-  );
+  const titles = new Map(catalog.topics.map((topic) => [topic.id, topic.title]));
+  const topics = [...new Set(pieces.map((piece) => piece.category))]
+    .sort((left, right) => left.localeCompare(right))
+    .map((id) => ({ id, title: titles.get(id) ?? id, path: `/topics/${id}` }));
   const sitemap = [
     "/",
     "/about",
     "/now",
     "/archive",
-    ...topicIds.map((id) => `/topics/${id}`),
+    ...topics.map((topic) => topic.path),
     ...pieces.map((piece) => piece.path),
     "/feed.xml",
     "/sitemap.xml",
@@ -121,6 +129,7 @@ export function publish(catalog: ContentCatalog): PublishResult {
     ok: true,
     identity: catalog.identity,
     pieces,
+    topics,
     redirects,
     feed,
     sitemap,
