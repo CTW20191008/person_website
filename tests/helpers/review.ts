@@ -85,7 +85,7 @@ export function renderReviewReport(rows: ReviewRecord[], generatedAt: string): s
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
-  <title>记录读取测试报告</title>
+  <title>内容存储测试报告</title>
   <style>
     body { margin: 2rem; font-family: "Iowan Old Style", "Songti SC", serif; color: #1c1915; background: #f6f1e7; }
     h1 { font-weight: 500; letter-spacing: 0.04em; }
@@ -104,7 +104,7 @@ export function renderReviewReport(rows: ReviewRecord[], generatedAt: string): s
   </style>
 </head>
 <body>
-  <h1>记录读取测试报告</h1>
+  <h1>内容存储测试报告</h1>
   <p>${passed} 通过，${failed} 未通过，共 ${rows.length} 条。执行时长 ${formatDuration(totalMs)}。生成时间 ${generatedAt}。</p>
   <table>
     <thead>

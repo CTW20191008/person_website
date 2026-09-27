@@ -37,7 +37,19 @@ export type DiagnosticCode =
   | "published-at-missing"
   | "body-missing"
   | "media-missing"
-  | "category-missing";
+  | "category-missing"
+  | "identity-missing"
+  | "identity-invalid"
+  | "identity-name-missing"
+  | "identity-link-invalid"
+  | "topics-missing"
+  | "topics-invalid"
+  | "topics-id-invalid"
+  | "topics-title-missing"
+  | "topics-duplicate"
+  | "category-unknown"
+  | "media-invalid"
+  | "media-not-found";
 
 export type Diagnostic = {
   level: "fatal" | "warning";
@@ -46,6 +58,31 @@ export type Diagnostic = {
 };
 
 export type PieceLoadResult = {
+  pieces: Piece[];
+  errors: Diagnostic[];
+  warnings: Diagnostic[];
+};
+
+export type IdentityLink = {
+  label: string;
+  url: string;
+};
+
+export type Identity = {
+  name: string;
+  now: string;
+  links: IdentityLink[];
+  body: string;
+};
+
+export type Topic = {
+  id: string;
+  title: string;
+};
+
+export type ContentCatalog = {
+  identity?: Identity;
+  topics: Topic[];
   pieces: Piece[];
   errors: Diagnostic[];
   warnings: Diagnostic[];
