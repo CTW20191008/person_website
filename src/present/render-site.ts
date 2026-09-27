@@ -11,6 +11,7 @@ export type ResolvedRoute =
 export type RenderOptions = {
   siteUrl?: string;
   homeLimit?: number;
+  signedIn?: boolean;
 };
 
 function escapeHtml(value: string): string {
@@ -49,7 +50,7 @@ const css = `
   .more { font-family: "Avenir Next", "PingFang SC", sans-serif; }
 `;
 
-function page(result: PublishSuccess, title: string, main: string): string {
+function page(result: PublishSuccess, title: string, main: string, signedIn = false): string {
   const fullTitle = title === result.identity.name ? title : `${title} — ${result.identity.name}`;
   return `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -66,6 +67,7 @@ function page(result: PublishSuccess, title: string, main: string): string {
       <a href="/archive">时间线</a>
       <a href="/about">关于</a>
       <a href="/now">近况</a>
+      ${signedIn ? `<a href="/upload">上传</a><a href="/settings">设置</a><a href="/logout">退出</a>` : `<a href="/login">登录</a>`}
     </nav>
   </header>
   <main>
@@ -89,7 +91,7 @@ function pieceList(pieces: PublishedPiece[]): string {
   return `<ol>${pieces.map(pieceItem).join("\n")}</ol>`;
 }
 
-function renderHome(result: PublishSuccess, homeLimit: number): string {
+function renderHome(result: PublishSuccess, homeLimit: number, signedIn = false): string {
   const shown = result.pieces.slice(0, homeLimit);
   const now = renderMarkdown(result.identity.now);
   const more =
@@ -102,29 +104,30 @@ function renderHome(result: PublishSuccess, homeLimit: number): string {
     `${now ? `<section class="now">${now}</section>` : ""}
     ${pieceList(shown)}
     ${more}`,
+    signedIn,
   );
 }
 
-function renderAbout(result: PublishSuccess): string {
-  return page(result, "关于", renderMarkdown(result.identity.body));
+function renderAbout(result: PublishSuccess, signedIn = false): string {
+  return page(result, "关于", renderMarkdown(result.identity.body), signedIn);
 }
 
-function renderNow(result: PublishSuccess): string {
-  return page(result, "近况", `<h1>近况</h1>${renderMarkdown(result.identity.now)}`);
+function renderNow(result: PublishSuccess, signedIn = false): string {
+  return page(result, "近况", `<h1>近况</h1>${renderMarkdown(result.identity.now)}`, signedIn);
 }
 
-function renderArchive(result: PublishSuccess): string {
-  return page(result, "时间线", `<h1>时间线</h1>${pieceList(result.pieces)}`);
+function renderArchive(result: PublishSuccess, signedIn = false): string {
+  return page(result, "时间线", `<h1>时间线</h1>${pieceList(result.pieces)}`, signedIn);
 }
 
-function renderTopic(result: PublishSuccess, id: string): string | undefined {
+function renderTopic(result: PublishSuccess, id: string, signedIn = false): string | undefined {
   const topic = result.topics.find((item) => item.id === id);
   if (!topic) return undefined;
   const pieces = result.pieces.filter((piece) => piece.category === id);
-  return page(result, topic.title, `<h1>${escapeHtml(topic.title)}</h1>${pieceList(pieces)}`);
+  return page(result, topic.title, `<h1>${escapeHtml(topic.title)}</h1>${pieceList(pieces)}`, signedIn);
 }
 
-function renderPiece(result: PublishSuccess, piece: PublishedPiece): string {
+function renderPiece(result: PublishSuccess, piece: PublishedPiece, signedIn = false): string {
   const images = piece.media
     .map(
       (item) =>
@@ -139,14 +142,16 @@ function renderPiece(result: PublishSuccess, piece: PublishedPiece): string {
     <p class="summary">${escapeHtml(piece.summary)}</p>
     <article>${piece.html}</article>
     ${images}`,
+    signedIn,
   );
 }
 
-function renderNotFound(result: PublishSuccess): string {
+function renderNotFound(result: PublishSuccess, signedIn = false): string {
   return page(
     result,
     "没有这一页",
     `<h1>没有这一页</h1><p><a href="/">回到首页</a></p>`,
+    signedIn,
   );
 }
 
@@ -209,26 +214,27 @@ export function resolveRoute(
   const path = normalize(pathname);
   const siteUrl = options.siteUrl ?? "https://example.com";
   const homeLimit = options.homeLimit ?? HOME_LIMIT;
+  const signedIn = options.signedIn ?? false;
   const html = "text/html; charset=utf-8";
   const xml = "application/xml; charset=utf-8";
   const redirect = result.redirects.find((item) => `/${item.from}` === path);
   if (redirect) return { status: 301, location: redirect.to };
 
-  if (path === "/") return { status: 200, contentType: html, body: renderHome(result, homeLimit) };
-  if (path === "/about") return { status: 200, contentType: html, body: renderAbout(result) };
-  if (path === "/now") return { status: 200, contentType: html, body: renderNow(result) };
-  if (path === "/archive") return { status: 200, contentType: html, body: renderArchive(result) };
+  if (path === "/") return { status: 200, contentType: html, body: renderHome(result, homeLimit, signedIn) };
+  if (path === "/about") return { status: 200, contentType: html, body: renderAbout(result, signedIn) };
+  if (path === "/now") return { status: 200, contentType: html, body: renderNow(result, signedIn) };
+  if (path === "/archive") return { status: 200, contentType: html, body: renderArchive(result, signedIn) };
   if (path === "/feed.xml") return { status: 200, contentType: xml, body: renderFeed(result, siteUrl) };
   if (path === "/sitemap.xml") {
     return { status: 200, contentType: xml, body: renderSitemap(result, siteUrl) };
   }
   if (path.startsWith("/topics/")) {
-    const body = renderTopic(result, path.slice("/topics/".length));
+    const body = renderTopic(result, path.slice("/topics/".length), signedIn);
     if (body) return { status: 200, contentType: html, body };
   }
   const piece = result.pieces.find((item) => item.path === path);
-  if (piece) return { status: 200, contentType: html, body: renderPiece(result, piece) };
-  return { status: 404, contentType: html, body: renderNotFound(result) };
+  if (piece) return { status: 200, contentType: html, body: renderPiece(result, piece, signedIn) };
+  return { status: 404, contentType: html, body: renderNotFound(result, signedIn) };
 }
 
 export function routeParts(route: ResolvedRoute): {

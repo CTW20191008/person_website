@@ -18,6 +18,10 @@ const RESERVED = new Set([
   "topics",
   "photos",
   "tags",
+  "upload",
+  "login",
+  "logout",
+  "settings",
   "feed.xml",
   "sitemap.xml",
 ]);

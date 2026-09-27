@@ -325,7 +325,18 @@ describe("loadPieces", () => {
     });
   });
 
-  it.each(["about", "now", "archive", "topics", "photos", "tags"])(
+  it.each([
+    "about",
+    "now",
+    "archive",
+    "topics",
+    "photos",
+    "tags",
+    "upload",
+    "login",
+    "logout",
+    "settings",
+  ])(
     "rejects reserved slug %s",
     (slug) => {
       const result = loadPieces(pieces(publishedFile({ slug })));

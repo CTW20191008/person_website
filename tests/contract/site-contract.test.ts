@@ -286,6 +286,11 @@ describe("site contract", () => {
       files: () => pieceFile("about"),
     },
     {
+      content: "短链 upload 留给上传页时构建失败",
+      codes: ["slug-reserved"],
+      files: () => pieceFile("upload"),
+    },
+    {
       content: "别名使用保留字时构建失败",
       codes: ["alias-conflict"],
       files: () => pieceFile("reading", { aliases: ["archive"] }),
