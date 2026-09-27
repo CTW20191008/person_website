@@ -4,18 +4,15 @@
 
 需要 Node.js 20 或更高版本。
 
-## 本地预览
+## 安装
 
 ```bash
 npm install
-npm run dev
 ```
 
-然后打开 http://localhost:4321 。默认读的是 `fixtures/sample`，那是一份样例，不是正式的个人资料。
+这条命令按 `package.json` 安装依赖，并生成 `node_modules/`。`node_modules` 是第三方包的目录，不进入 Git。依赖的具体版本记在 `package-lock.json` 里。
 
-`npm install` 会按 `package.json` 安装依赖，并生成 `node_modules/`。`node_modules` 是第三方包的目录，不进入 Git。依赖的具体版本记在 `package-lock.json` 里。
-
-## 本机构建
+## 本机站点
 
 正式内容放在 `private/site/`，不进入公开仓库：
 
@@ -26,14 +23,21 @@ private/site/content/pieces/
 private/site/content/media/
 ```
 
+在浏览器里打开站点：
+
 ```bash
 npm run dev:local
+```
+
+然后打开 http://localhost:4321 。
+
+生成静态文件：
+
+```bash
 npm run build:local
 ```
 
-`dev:local` 在 http://localhost:4321 预览这份内容。`build:local` 把站点写到 `dist/`。
-
-有致命错误时命令停住，不会清空已经生成的 `dist/`。草稿缺少标题、摘要、日期或正文时，命令继续，并把警告写进日志。
+站点写到 `dist/`。有致命错误时命令停住，不会清空已经生成的 `dist/`。草稿缺少标题、摘要、日期或正文时，命令继续，并把警告写进日志。
 
 ## 目录
 
@@ -44,11 +48,11 @@ src/content/     内容存储。读记录、身份、栏目词表，并核对图
 src/publish/     发布。筛出已发布记录，排序，产出跳转、RSS 数据和站点地图数据
 src/present/     展示。把发布结果写成页面、RSS 和站点地图
 src/pages/       站点地址。首页、关于、近况、时间线、栏目、单篇、404
-fixtures/sample/ 用来预览的样例内容
+fixtures/sample/ 自测读的样例内容
 tests/           与上面三块对应的自测
 ```
 
-一条记录是 `content/pieces/{slug}.md`。身份在 `config/identity.md`，栏目词表在 `config/topics.yml`，图片在 `content/media/`。样例里这几项目录放在 `fixtures/sample` 下。正式的身份文件和图片不进入公开仓库。
+一条记录是 `content/pieces/{slug}.md`。身份在 `config/identity.md`，栏目词表在 `config/topics.yml`，图片在 `content/media/`。正式文件放在 `private/site/` 下的同样路径里，不进入公开仓库。自测使用 `fixtures/sample` 里的同一布局。
 
 有致命错误时，发布停住，不会把半成品写成页面。
 
